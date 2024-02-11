@@ -1,100 +1,88 @@
-# 4 如何与rslidar_sdk_node v1.3.x共存？
+# 4 How to coexist with rslidar_sdk_node v1.3.x?
 
+## 4.1 Problem Description
 
+The configurations of `rslidar_sdk_node` v1.3.x and v1.5.x are different. Except for the two potential interaction scenarios described below, they can run independently without any interference.
 
-## 4.1 问题描述
+1. `rslidar_sdk_node` publishes point clouds on the `/rslidar_points` topic, and the data is recorded to a cloud rosbag file using rosbag. Later, this rosbag file is played back and published to `/rslidar_points`, where `rslidar_sdk_node` subscribes and plays it.
 
-`rslidar_sdk_node` `v1.3.x`和`v1.5.x`的配置方式不同。除了如下两个可能有交互的场景外， 两者各自运行，没有关系。
+2. `rslidar_sdk_node` publishes raw `MSOP/DIFOP Packets` on the `/rslidar_packets` topic, and the data is recorded to a packet rosbag file using rosbag. Later, this rosbag file is played back to `/rslidar_packets`, where `rslidar_sdk_node` subscribes and plays it.
 
-+ `rslidar_sdk_node`在主题`/rslidar_points`下发布点云，rosbag订阅并录制到一个cloud rosbag文件。后面rosbag又会回放这个文件，发布到`/rslidar_points`，`rslidar_sdk_node`订阅并播放它。
+In the first scenario, the point cloud format published by v1.3.x and v1.5.x is the same, so playing the rosbag recorded by v1.3.x on v1.5.x works seamlessly.
 
-+ `rslidar_sdk_node`在主题`/rslidar_packets`下发布原始的`MSOP/DIFOP Packet`，rosbag订阅并录制到一个packet rosbag文件。后面rosbag又会回放这个文件到`/rslidar_packets`，`rslidar_sdk_node`订阅并播放它。
+In the second scenario, v1.3.x publishes MSOP/DIFOP Packets separately on two topics `/rslidar_packets` and `/rslidar_packets_difop`, while v1.5.x publishes them on a single topic `/rslidar_packets`. Furthermore, the message definitions in v1.3.x and v1.5.x are different, so playing the packet rosbag recorded by v1.3.x on v1.5.x is not possible. ROS detects the mismatched MD5 Checksum for these two message formats and reports an error.
 
-第一种场景下，`v1.3.x`和`v1.5.x`发布的点云格式相同，所以`v1.3.x`录制的点云，在`v1.5.x`上播放是没有问题的。
+This document explains how to configure `rslidar_sdk` v1.5.x to allow it to simultaneously play packet rosbags recorded by both v1.3.x and v1.5.x in the second scenario.
 
-第二种场景下，`v1.3.x`将MSOP/DIFOP Packet分别发布在两个主题`/rslidar_packets`和`/rslidar_packets_difop`下，而`v1.5.x`将MSOP/DIFOP Packet发布在单个主题`/rslidar_packets`下，而且`v1.3.x`和`v1.5.x`的消息定义也不同，所以`v1.3.x`录制的packet rosbag在`v1.5.x`上不能播放。ROS会检测出这两种格式的MD5 Checksum不匹配并报错。
+## 4.2 Scenario Description
 
-本文说明如何配置`rslidar_sdk` `v1.5.x`，让它在第二种场景下可以同时播放`v1.3.x`和`v1.5.x`的packet rosbag。
+The scenario is as follows:
++ Two Lidars, `Lidar1` running `v1.3.x` and `Lidar2` running `v1.5.x`.
++ One host for analyzing data from `Lidar1` and `Lidar2`.
 
+![Packet Rosbag](./img/04_01_packet_rosbag.png)
 
+## 4.3 Steps
 
-## 4.2 场景说明
+### 4.3.1 Configure v1.3.x Lidar
 
-场景说明如下。
-+ 2个雷达，`Lidar1`是运行`v1.3.x`的雷达，`Lidar2`是运行`v1.5.x`的雷达。
-+ 1台主机，用于分析`Lidar1`和`Lidar2`的数据。
+Record a packet rosbag using `v1.3.x rslidar_sdk_node`.
 
-![](./img/04_01_packet_rosbag.png)
+As per the default `config.yaml` configuration, messages are published to the `/rslidar_packets` and `/rslidar_packets_difop` topics.
 
-## 4.3 步骤
-
-
-### 4.3.1 配置 v1.3.x 雷达
-
-使用`v1.3.x` `rslidar_sdk_node`录制pacekt rosbag。
-
-按照默认的`config.yaml`的配置，消息发布到主题`/rslidar_packets`和`/rslidar_packets_difop`下。
-
-```
+```yaml
 common:
-  msg_source: 1                                         #0: not use Lidar
-                                                        #1: packet message comes from online Lidar
-                                                        #2: packet message comes from ROS or ROS2
-                                                        #3: packet message comes from Pcap file
-                                                        #4: packet message comes from Protobuf-UDP
-                                                        #5: point cloud comes from Protobuf-UDP
-  send_packet_ros: true                                 #true: Send packets through ROS or ROS2(Used to record packet)
-  send_point_cloud_ros: true                            #true: Send point cloud through ROS or ROS2
+  msg_source: 1
+  send_packet_ros: true
+  send_point_cloud_ros: true
 lidar:
   - driver:
-      lidar_type: RSM1                                  #LiDAR type - RS16, RS32, RSBP, RSHELIOS, RS128, RS80, RSM1
-      msop_port: 6699                                   #Msop port of lidar
-      difop_port: 7788                                  #Difop port of lidar
+      lidar_type: RSM1
+      msop_port: 6699
+      difop_port: 7788
     ros:
-      ros_send_packet_topic: /rslidar_packets           #Topic used to send lidar packets through ROS
-      ros_send_point_cloud_topic: /rslidar_points       #Topic used to send point cloud through ROS
+      ros_send_packet_topic: /rslidar_packets
+      ros_send_point_cloud_topic: /rslidar_points
 ```
 
-### 4.3.2 配置 v1.5.x 雷达
+### 4.3.2 Configure v1.5.x Lidar
 
-使用`v1.5.6` `rslidar_sdk_node`录制packet rosbag。
+Use `v1.5.6 rslidar_sdk_node` to record packet rosbag.
 
-为了与`v1.3.2`的消息区别，将消息输出到主题`/rslidar_packets_v2`下。
+To differentiate from `v1.3.2` messages, output the messages to the `/rslidar_packets_v2` topic.
 
-```
+```yaml
 common:
-  msg_source: 1                                         #0: not use Lidar
-                                                        #1: packet message comes from online Lidar
-                                                        #2: packet message comes from ROS or ROS2
-                                                        #3: packet message comes from Pcap file
-  send_packet_ros: true                                 #true: Send packets through ROS or ROS2(Used to record packet)
-  send_point_cloud_ros: true                            #true: Send point cloud through ROS or ROS2
+  msg_source: 1 
+  send_packet_ros: true
+  send_point_cloud_ros: true
 lidar:
   - driver:
-      lidar_type: RSM1                                  #LiDAR type - RS16, RS32, RSBP, RSHELIOS, RS128, RS80, RS48, RSM1
-      msop_port: 6699                                   #Msop port of lidar
-      difop_port: 7788                                  #Difop port of lidar
+      lidar_type: RSM1
+      msop_port: 6699
+      difop_port: 7788
     ros:
-      ros_send_packet_topic: /rslidar_packets_v2        #Topic used to send lidar packets through ROS
-      ros_send_point_cloud_topic: /rslidar_points       #Topic used to send point cloud through ROS
+      ros_send_packet_topic: /rslidar_packets_v2
+      ros_send_point_cloud_topic: /rslidar_points
 ```
 
 
-### 4.3.3 配置 v1.5.x 主机
+### 4.3.3 Configure v1.5.x Host
 
-+ 打开CMake编译选项`ENABLE_SOURCE_PACKET_LEGACY=ON`，编译`rslidar_sdk`。
++ Open CMake compilation option `ENABLE_SOURCE_PACKET_LEGACY=ON` and compile `rslidar_sdk`.
 
-```
+```cmake
 # CMakeLists.txt
 
 option(ENABLE_SOURCE_PACKET_LEGACY "Enable ROS Source of MSOP/DIFOP Packet v1.3.x" ON)
-```
-
-+ 在`config.yaml`中，增加一个配置项`ros_recv_packet_legacy_topic`: `/rslidar_packets`。这样`rslidar_sdk_node`将同时订阅两个主题。
-  + 订阅`/rslidar_packets`和`/rslidar_packets_difop`，读入`v1.3.x`的消息
-  + 订阅`/rslidar_packets_v2`，读入`v1.5.x`的消息
 
 ```
+
++ In `config.yaml`, add a configuration `ros_recv_packet_legacy_topic: /rslidar_packets`. This way, `rslidar_sdk_node` will simultaneously subscribe to two topics:
+  + Subscribe to `/rslidar_packets` and `/rslidar_packets_difop`, reading `v1.3.x` messages.
+  + Subscribe to `/rslidar_packets_v2`, reading `v1.5.x` messages.
+
+```yaml
 common:
   msg_source: 1                                         #0: not use Lidar
                                                         #1: packet message comes from online Lidar
@@ -112,4 +100,3 @@ lidar:
       ros_recv_packet_topic: /rslidar_packets_v2        #Topic used to receive lidar packets from ROS
       ros_send_point_cloud_topic: /rslidar_points       #Topic used to send point cloud through ROS
 ```
-
