@@ -11,9 +11,9 @@
 
 ## 2 Dependencies
 
-- ROS2
-- libpcap (already in dependencies script of AS)
-- libyaml-cpp-dev (already in dependencies script of AS)
+- ROS2 (follow set up tutorials in AS repo)
+- libpcap (already in dependencies script)
+- libyaml-cpp-dev (already in dependencies script)
 
 ## 3 Build and Run
 
