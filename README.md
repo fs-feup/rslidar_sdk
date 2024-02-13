@@ -25,7 +25,11 @@ source install/setup.bash
 ros2 launch rslidar_sdk start.py
 ```
 
-## 4 Introduction to parameters
+## 4 Configure
+
+All configuration can be performed by editing the CMakeLists to change compilation mode, changing the package.xml between the ROS2 and ROS1 version and editing the [config.yaml file](./config/config.yaml) in config folder.
+
+## 5 Introduction to parameters
 
 To change behaviors of rslidar_sdk, change its parameters. please read the following links for detail information.
 
@@ -33,7 +37,7 @@ To change behaviors of rslidar_sdk, change its parameters. please read the follo
 
 [Intro to hidden parameters](doc/intro/03_hiding_parameters_intro.md)
 
-## 5 Quick start
+## 6 Quick start
 
 Below are some quick guides to use rslidar_sdk. 
 
@@ -44,7 +48,7 @@ Below are some quick guides to use rslidar_sdk.
 [Change Point Type](doc/howto/05_how_to_change_point_type.md) 
 
 
-## 6 Advanced Topics
+## 7 Advanced Topics
 
 [Online Lidar - Advanced topics](doc/howto/07_online_lidar_advanced_topics.md) 
 
