@@ -2,7 +2,7 @@
 
 ## 1 Introduction
 
-**rslidar_sdk** is the Software Development Kit of the RoboSense Lidar based on Ubuntu. It contains:
+**rslidar_sdk** is the Software Development Kit of the RoboSense Lidar based on Ubuntu. Checkout the [user manual](./doc/user_guide.pdf).
 
 ### 1.1 Point Type Supported
 
@@ -16,6 +16,8 @@
 - libyaml-cpp-dev (already in dependencies script)
 
 ## 3 Build and Run
+
+Before running the sdk, make sure that the [connection with the LiDAR is established](./doc/connection_to_lidar.md).
 
 From the root of the AS repo (or wherever).
 
