@@ -93,12 +93,16 @@ message(=============================================================)
 #========================
 
 #ROS#
-find_package(roscpp 1.12 QUIET)
+if("$ENV{ROS_VERSION}" STREQUAL "1")
+  find_package(roscpp 1.12 QUIET)
+else()
+  set(roscpp_FOUND FALSE)
+endif()
 
 if(roscpp_FOUND)
 
   message(=============================================================)
-  message("-- ROS Found. ROS Support is turned On.")
+  message("-- ROS1 Found. ROS1 Support is turned On.")
   message(=============================================================)
 
   add_definitions(-DROS_FOUND)
@@ -121,7 +125,7 @@ if(roscpp_FOUND)
 else(roscpp_FOUND)
 
   message(=============================================================)
-  message("-- ROS Not Found. ROS Support is turned Off.")
+  message("-- ROS1 Support is turned Off.")
   message(=============================================================)
 
 endif(roscpp_FOUND)
